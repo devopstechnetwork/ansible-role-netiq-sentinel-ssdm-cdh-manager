@@ -1,0 +1,4 @@
+---
+# SLES < 12
+#postgresql_repo: http://download.opensuse.org/repositories/server:database:postgresql/SLE_11_SP4/server:database:postgresql.repo
+postgresql_repo: http://download.opensuse.org/repositories/server:database:postgresql/SLE_11_SP4

@@ -1,0 +1,74 @@
+---
+# tasks file for netiq-sentinel-ssdm-master
+- name: set OS dependent variables
+  tags:
+    - prereq
+  include_vars: "{{ item }}"
+  with_first_found:
+   - "{{ ansible_distribution }}_{{ ansible_distribution_version }}.yml"
+   - "{{ ansible_distribution }}_{{ ansible_distribution_major_version }}.yml"
+   - "{{ ansible_distribution }}.yml"
+   - "{{ ansible_os_family }}_{{ ansible_distribution_major_version }}.yml"
+   - "{{ ansible_os_family }}.yml"
+   - default.yml
+
+
+- name: ensure /var/run/postgresql
+  file:
+    path: /var/run/postgresql
+    state: directory
+
+- name: ensure /srv/software
+  file:
+    path: /srv/software
+    state: directory
+
+- name: download cdh
+  get_url:
+    url: http://archive.cloudera.com/cm5/installer/5.9.2.3/cloudera-manager-installer.bin
+    dest: /srv/software
+    mode: 0775
+
+
+- pause:
+    prompt: "run ./cloudera-manager-installer.bin"
+
+- name: set owner
+  file:
+    path: /var/run/postgresql
+    state: directory
+    owner: cloudera-scm
+    group: cloudera-scm
+
+- name: ensure /opt/novell/sentinel/scalabestorage
+  file:
+    path: /opt/novell/sentinel/scalabestorage
+    state: directory
+  tags:
+    - spark
+
+- name: copy spark app
+  copy:
+    src: "{{ item }}"
+    dest: /opt/novell/sentinel/scalabestorage
+    owner: hdfs
+  with_items:
+    - avroevent-8.0.1.0.avsc
+    - avrorawdata-8.0.1.0.avsc
+    - events.json
+    - log4j.properties
+    - manage_spark_jobs.sh
+    - SparkApp-1.0.1.0-RELEASE-cdh5.9.0.jar
+    - spark.properties
+  tags:
+    - spark
+
+- name: make manage_spark_jobs.sh executable
+  file:
+    path: /opt/novell/sentinel/scalabestorage/manage_spark_jobs.sh
+    mode: u+x,g+x
+  tags:
+    - spark
+
+- name: run spark jobs
+    pause: manage_spark_jobs.sh start
